@@ -85,8 +85,8 @@ Training containers reach it via `host.docker.internal:5000` (Linux Docker bridg
 
 The DGX runner must be:
 1. Registered for this repo with label `dgx-spark`
-2. Running as a Docker container using `ghcr.io/miramar-labs/github-runner-mlops-torch-triton-gke-pipeline:latest`
-3. Started via `./runner/launch.sh TOKEN` from the [github-actions-hello](https://github.com/miramar-labs/github-actions-hello) repo
+2. Running as a Docker container using `ghcr.io/miramar-labs-org/github-runner-mlops-torch-triton-gke-pipeline:latest`
+3. Started via `./runner/launch.sh TOKEN` from the [github-actions-hello](https://github.com/miramar-labs-org/github-actions-hello) repo
 
 The runner container mounts the host Docker socket — `--gpus all` in the training step works because the Docker daemon on the DGX host has GPU access.
 
@@ -115,4 +115,4 @@ Logits output: index 0 = negative, index 1 = positive. Apply softmax for probabi
 
 ## Sibling Repo
 
-[github-actions-hello](https://github.com/miramar-labs/github-actions-hello) at `/home/aaron/git-miramar-labs/github-actions-hello` contains the runner image (`ghcr.io/miramar-labs/github-runner-mlops-torch-triton-gke-pipeline`), runner launch scripts, and the textlyze app pipeline. This repo was created from that project.
+[github-actions-hello](https://github.com/miramar-labs-org/github-actions-hello) at `/home/aaron/git-miramar-labs-org/github-actions-hello` contains the runner image (`ghcr.io/miramar-labs-org/github-runner-mlops-torch-triton-gke-pipeline`), runner launch scripts, and the textlyze app pipeline. This repo was created from that project.

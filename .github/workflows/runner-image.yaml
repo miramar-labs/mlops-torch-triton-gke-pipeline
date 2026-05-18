@@ -40,7 +40,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/miramar-labs/github-runner-${{ vars.REPO_NAME }}:latest
-            ghcr.io/miramar-labs/github-runner-${{ vars.REPO_NAME }}:${{ github.sha }}
-          cache-from: type=registry,ref=ghcr.io/miramar-labs/github-runner-${{ vars.REPO_NAME }}:buildcache-v2
-          cache-to: type=registry,ref=ghcr.io/miramar-labs/github-runner-${{ vars.REPO_NAME }}:buildcache-v2,mode=max
+            ghcr.io/miramar-labs-org/github-runner-${{ vars.REPO_NAME }}:latest
+            ghcr.io/miramar-labs-org/github-runner-${{ vars.REPO_NAME }}:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/miramar-labs-org/github-runner-${{ vars.REPO_NAME }}:buildcache-v2
+          cache-to: type=registry,ref=ghcr.io/miramar-labs-org/github-runner-${{ vars.REPO_NAME }}:buildcache-v2,mode=max

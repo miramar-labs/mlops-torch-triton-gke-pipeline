@@ -2,14 +2,14 @@
 
 GPU ML training pipeline: fine-tune DistilBERT for text classification on a DGX Station, track experiments with MLflow, serve the model on GKE via Triton Inference Server.
 
-[![ML Train](https://github.com/miramar-labs/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train.yaml/badge.svg)](https://github.com/miramar-labs/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train.yaml)
-[![ML Deploy](https://github.com/miramar-labs/mlops-torch-triton-gke-pipeline/actions/workflows/ml-deploy.yaml/badge.svg)](https://github.com/miramar-labs/mlops-torch-triton-gke-pipeline/actions/workflows/ml-deploy.yaml)
+[![ML Train](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train.yaml/badge.svg)](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train.yaml)
+[![ML Deploy](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-deploy.yaml/badge.svg)](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-deploy.yaml)
 
 ## Links
 
 - **[GCP Artifact Registry](https://console.cloud.google.com/artifacts/docker/miramar-platform/us-west1/apps?project=miramar-platform)** — `us-west1-docker.pkg.dev/miramar-platform/apps/triton-text-classifier`
 - **[GKE Workloads](https://console.cloud.google.com/kubernetes/workload/overview?project=miramar-platform)** — `triton` deployment in namespace `mlops-torch-triton-gke-pipeline` on `miramar-shared-gke`
-- **[GitHub Actions](https://github.com/miramar-labs/mlops-torch-triton-gke-pipeline/actions)** — workflow run history
+- **[GitHub Actions](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions)** — workflow run history
 
 ## Pipeline
 
@@ -107,7 +107,7 @@ Then open **http://localhost:5000** in your browser.
 
 ## Runners
 
-Two self-hosted runners are required. The runner image (`ghcr.io/miramar-labs/github-runner-mlops-torch-triton-gke-pipeline:latest`) and launch scripts live in [github-actions-hello](https://github.com/miramar-labs/github-actions-hello). This repo includes a copy of `runner/` for convenience.
+Two self-hosted runners are required. The runner image (`ghcr.io/miramar-labs-org/github-runner-mlops-torch-triton-gke-pipeline:latest`) and launch scripts live in [github-actions-hello](https://github.com/miramar-labs-org/github-actions-hello). This repo includes a copy of `runner/` for convenience.
 
 | Runner | Label | Host | Used for |
 |---|---|---|---|
@@ -116,7 +116,7 @@ Two self-hosted runners are required. The runner image (`ghcr.io/miramar-labs/gi
 
 **Launch a runner** (get a fresh token from Settings → Actions → Runners → New self-hosted runner):
 ```bash
-./runner/launch.sh TOKEN https://github.com/miramar-labs/mlops-torch-triton-gke-pipeline
+./runner/launch.sh TOKEN https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline
 ```
 
 `launch.sh` auto-detects architecture (`aarch64` → `dgx-spark`, `x86_64` → `msi-wsl2`), pulls the latest image, and registers against the supplied repo URL.

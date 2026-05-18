@@ -2,7 +2,7 @@
 set -euo pipefail
 
 TOKEN="${1:?Usage: launch.sh <RUNNER_TOKEN> [REPO_URL]}"
-REPO_URL="${2:-https://github.com/miramar-labs/mlops-torch-triton-gke-pipeline}"
+REPO_URL="${2:-https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline}"
 
 # Derive a unique container name from the repo slug
 REPO_SLUG="${REPO_URL##*/}"
@@ -15,7 +15,7 @@ case "$(uname -m)" in
   *) echo "Unknown arch: $(uname -m)"; exit 1 ;;
 esac
 
-IMAGE=ghcr.io/miramar-labs/github-runner-mlops-torch-triton-gke-pipeline:latest
+IMAGE=ghcr.io/miramar-labs-org/github-runner-mlops-torch-triton-gke-pipeline:latest
 DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
 
 echo "Runner:    $RUNNER_NAME ($RUNNER_LABELS) on $(uname -m)"
