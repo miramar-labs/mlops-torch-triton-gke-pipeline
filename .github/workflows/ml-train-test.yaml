@@ -19,11 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build training image
-        run: docker build -f ml/Dockerfile.train -t ml-trainer:latest .
+      - name: Install test dependencies
+        run: pip install -q -r ml/requirements.txt
 
       - name: Run tests
-        run: |
-          docker run --rm \
-            -v "$HOME/.cache/huggingface:/root/.cache/huggingface" \
-            ml-trainer:latest python -m pytest test_train.py -v
+        run: python -m pytest ml/test_train.py -v
+
+      - name: Build training image
+        run: docker build -f ml/Dockerfile.train -t ml-trainer:latest .
