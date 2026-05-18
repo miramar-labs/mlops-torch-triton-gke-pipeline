@@ -2,6 +2,7 @@
 
 GPU ML training pipeline: fine-tune DistilBERT for text classification on a DGX Station, track experiments with MLflow, serve the model on GKE via Triton Inference Server.
 
+[![ML Train Test](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train-test.yaml/badge.svg)](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train-test.yaml)
 [![ML Train](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train.yaml/badge.svg)](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train.yaml)
 [![ML Deploy](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-deploy.yaml/badge.svg)](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-deploy.yaml)
 
@@ -27,13 +28,18 @@ VS Code will use the `mlops-torch-triton` interpreter automatically via `.python
 ## Pipeline
 
 ```
-ML Train — workflow_dispatch (dgx-spark, ARM64, GPU)
+ML Train Test — workflow_dispatch or push to ml/ (dgx, ARM64)
+  ├── docker build → ml-trainer image
+  └── pytest → test_train.py
+
+ML Train — triggered by ML Train Test success (dgx, ARM64, GPU)
+  ├── docker build → ml-trainer image
   ├── docker run --gpus all → DistilBERT fine-tune on IMDB
   ├── log metrics → MLflow (host.docker.internal:5000)
   ├── export → model.onnx
   └── upload artifact → onnx-model
 
-ML Deploy — triggered by ML Train completion (msi-wsl2, x86_64)
+ML Deploy — triggered by ML Train success (wsl2, x86_64)
   ├── download artifact → model.onnx
   ├── docker build → Triton serving image (model baked in)
   ├── push → GAR (latest + SHA tag)
@@ -44,21 +50,16 @@ ML Deploy — triggered by ML Train completion (msi-wsl2, x86_64)
 
 | Workflow | File | Runner | Trigger |
 |---|---|---|---|
-| **ML Train** | `ml-train.yaml` | `dgx-spark` | Manual (`workflow_dispatch`) |
-| **ML Deploy** | `ml-deploy.yaml` | `msi-wsl2` | Auto on train success; or manual with `run_id` |
+| **ML Train Test** | `ml-train-test.yaml` | `dgx` | Push to `ml/` or manual |
+| **ML Train** | `ml-train.yaml` | `dgx` | Auto on ML Train Test success; or manual |
+| **ML Deploy** | `ml-deploy.yaml` | `wsl2` | Auto on ML Train success |
 
-### ML Train inputs
+### ML Train inputs (manual dispatch only)
 
 | Input | Default | Description |
 |---|---|---|
 | `epochs` | `3` | Number of training epochs |
 | `experiment` | `text-classifier` | MLflow experiment name |
-
-### ML Deploy inputs (manual only)
-
-| Input | Description |
-|---|---|
-| `run_id` | Training workflow run ID to deploy from |
 
 The model artifact (`onnx-model`) passes between workflows via GitHub Actions artifact storage. The deploy workflow uses the training run's commit SHA as the image tag, so `latest` and the SHA-tagged image in GAR always correspond to the same trained model.
 
@@ -134,8 +135,7 @@ Two self-hosted runners are required. The runner image and launch scripts live i
 | `WIF_PROVIDER` | Secret | Workload Identity Federation provider resource name |
 | `GCP_SERVICE_ACCOUNT` | Secret | GCP service account email for WIF |
 | `MLFLOW_TRACKING_URI` | Variable | `http://host.docker.internal:5000` |
-| `RUNNER_LABELS_DGX` | Variable | `dgx-spark` |
-| `RUNNER_LABELS_MSI` | Variable | `msi-wsl2` |
+| `REPO_NAME` | Variable | Repository slug used as the K8s namespace |
 
 ## Triton Inference
 
@@ -166,15 +166,17 @@ Triton also exposes gRPC on port 8001 and Prometheus metrics on port 8002.
 
 ```
 .github/workflows/
+  ml-train-test.yaml    # Build training image and run pytest (entry point)
   ml-train.yaml         # GPU training on DGX — exports model.onnx as artifact
-  ml-deploy.yaml        # Triton image build + GKE deploy on MSI-WSL2
+  ml-deploy.yaml        # Triton image build + GKE deploy on WSL2
 ml/
   train.py              # DistilBERT fine-tune + ONNX export + MLflow logging
+  test_train.py         # Unit tests for tokenize_batch, evaluate, ONNX export
+  requirements.txt      # Local dev dependencies (CPU torch + pytest)
   Dockerfile.train      # GPU training image (nvcr.io/nvidia/pytorch:25.03-py3)
   Dockerfile.serve      # Triton serving image (model.onnx baked in at build time)
   triton_config.pbtxt   # Triton model config (ONNX Runtime backend)
   output/               # Generated at runtime — model.onnx (gitignored)
 k8s/
   triton.yaml           # Namespace + Deployment + Service for Triton on GKE
-  requirements.txt      # Local dev dependencies (CPU torch + pytest)
 ```
