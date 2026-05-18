@@ -23,4 +23,7 @@ jobs:
         run: docker build -f ml/Dockerfile.train -t ml-trainer:latest .
 
       - name: Run tests
-        run: docker run --rm ml-trainer:latest python -m pytest test_train.py -v
+        run: |
+          docker run --rm \
+            -v "$HOME/.cache/huggingface:/root/.cache/huggingface" \
+            ml-trainer:latest python -m pytest test_train.py -v

@@ -35,6 +35,7 @@ jobs:
           docker run --rm --gpus all \
             --add-host host.docker.internal:host-gateway \
             -v "$GITHUB_WORKSPACE/ml/output:/output" \
+            -v "$HOME/.cache/huggingface:/root/.cache/huggingface" \
             -e MLFLOW_TRACKING_URI="${{ vars.MLFLOW_TRACKING_URI }}" \
             -e MLFLOW_EXPERIMENT_NAME="${{ github.event.inputs.experiment }}" \
             -e EPOCHS="${{ github.event.inputs.epochs }}" \
