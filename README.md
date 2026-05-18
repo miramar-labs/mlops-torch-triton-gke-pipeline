@@ -95,12 +95,12 @@ Two self-hosted runners are required. The runner image and launch scripts live i
 
 ## GitHub Secrets and Variables
 
-| Name | Type | Description |
-|---|---|---|
-| `WIF_PROVIDER` | Secret | Workload Identity Federation provider resource name |
-| `GCP_SERVICE_ACCOUNT` | Secret | GCP service account email for WIF |
-| `MLFLOW_TRACKING_URI` | Variable | `http://host.docker.internal:5000` |
-| `REPO_NAME` | Variable | Repository slug used as the K8s namespace |
+| Name | Scope | Type | Description |
+|---|---|---|---|
+| `WIF_PROVIDER` | org | Secret | Workload Identity Federation provider resource name |
+| `GCP_SERVICE_ACCOUNT` | org | Secret | GCP service account email for WIF |
+| `MLFLOW_TRACKING_URI` | org | Variable | `http://host.docker.internal:5000` |
+| `REPO_NAME` | repo | Variable | Repository slug used as the K8s namespace |
 
 ## Triton Inference
 
