@@ -1,10 +1,12 @@
 import os
 
+import dill._dill
+if not hasattr(dill._dill, "PY3"):
+    dill._dill.PY3 = True
+
 import mlflow
 import torch
-from datasets import load_dataset, disable_caching
-
-disable_caching()
+from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizerFast
 
