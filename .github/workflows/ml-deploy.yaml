@@ -67,8 +67,6 @@ jobs:
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          install_components: gke-gcloud-auth-plugin
 
       - name: Configure Docker for GAR
         run: gcloud auth configure-docker "${GAR_LOCATION}-docker.pkg.dev" --quiet
