@@ -1,11 +1,10 @@
 FROM nvcr.io/nvidia/pytorch:25.03-py3
 
 RUN pip install --no-cache-dir \
-    transformers==4.40.0 \
-    datasets==2.19.0 \
-    mlflow==2.13.0 \
-    onnx==1.16.0 \
-    onnxruntime==1.18.0
+    transformers \
+    datasets \
+    mlflow \
+    onnx
 
 COPY ml/train.py /app/train.py
 WORKDIR /app
