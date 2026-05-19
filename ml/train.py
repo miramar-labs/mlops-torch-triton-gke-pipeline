@@ -1,8 +1,11 @@
 import os
+import numpy as np
 
 import dill._dill
 if not hasattr(dill._dill, "PY3"):
     dill._dill.PY3 = True
+if not hasattr(np, "object"):
+    np.object = object  # removed in NumPy 1.24; older datasets versions still reference it
 
 import torch
 from datasets import load_dataset

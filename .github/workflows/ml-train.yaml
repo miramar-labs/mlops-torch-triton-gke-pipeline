@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Build training image
-        run: docker build -f ml/Dockerfile.train -t ml-trainer:latest .
+        run: docker build --no-cache -f ml/Dockerfile.train -t ml-trainer:latest .
 
       - name: Train model
         run: |
