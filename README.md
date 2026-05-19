@@ -57,6 +57,8 @@ ML Deploy — triggered by ML Train success (wsl2, x86_64)
 | **GKE Cluster Expand** | [`miramar-platform-gcp`](https://github.com/miramar-labs-org/miramar-platform-gcp/actions/workflows/gke-cluster-expand.yaml) | `wsl2` | Manual only |
 | **GKE Cluster Restore** | [`miramar-platform-gcp`](https://github.com/miramar-labs-org/miramar-platform-gcp/actions/workflows/gke-cluster-restore.yaml) | `wsl2` | Manual only |
 
+> GKE Cluster Expand and Restore live in [miramar-platform-gcp](https://github.com/miramar-labs-org/miramar-platform-gcp), not this repo.
+
 ### Testing Triton when the cluster has insufficient resources
 
 Run these three workflows in sequence to temporarily scale up the cluster, deploy, and restore:
