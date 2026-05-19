@@ -36,7 +36,7 @@ ML Train Test — workflow_dispatch or push to ml/{train.py,test_train.py,Docker
 ML Train — triggered by ML Train Test success (dgx, ARM64, GPU)
   ├── docker build → ml-trainer image
   ├── docker run --gpus all → DistilBERT fine-tune on IMDB
-  ├── log metrics → MLflow (host.docker.internal:5000)
+  ├── log metrics → MLflow (localhost:5000, via --network host)
   ├── export → model.onnx
   └── upload artifact → onnx-model
 
@@ -54,6 +54,16 @@ ML Deploy — triggered by ML Train success (wsl2, x86_64)
 | **ML Train Test** | `ml-train-test.yaml` | `dgx` | Push to `ml/train.py`, `test_train.py`, or `Dockerfile.train`; or manual |
 | **ML Train** | `ml-train.yaml` | `dgx` | Auto on ML Train Test success; or manual |
 | **ML Deploy** | `ml-deploy.yaml` | `wsl2` | Auto on ML Train success |
+| **GKE Cluster Expand** | [`miramar-platform-gcp`](https://github.com/miramar-labs-org/miramar-platform-gcp/actions/workflows/gke-cluster-expand.yaml) | `wsl2` | Manual only |
+| **GKE Cluster Restore** | [`miramar-platform-gcp`](https://github.com/miramar-labs-org/miramar-platform-gcp/actions/workflows/gke-cluster-restore.yaml) | `wsl2` | Manual only |
+
+### Testing Triton when the cluster has insufficient resources
+
+Run these three workflows in sequence to temporarily scale up the cluster, deploy, and restore:
+
+1. **GKE Cluster Expand** — saves current node pool state (count + machine type) to GCS, then resizes the pool up
+2. **ML Deploy** — trigger manually to build and deploy the Triton serving image
+3. **GKE Cluster Restore** — reads the saved state from GCS and restores the pool automatically (optional `node_count_override` if needed)
 
 ### ML Train inputs (manual dispatch only)
 
@@ -87,11 +97,11 @@ The model artifact (`onnx-model`) passes between workflows via GitHub Actions ar
 
 ## Runners
 
-Two self-hosted runners are required. The runner image and launch scripts live in [github-actions-hello](https://github.com/miramar-labs-org/github-actions-hello).
+Two self-hosted runners are required. The runner image (`mlabs-runner`) and launch scripts live in [miramar-platform-gcp](https://github.com/miramar-labs-org/miramar-platform-gcp).
 
 | Runner | Label | Host | Used for |
 |---|---|---|---|
-| DGX Station | `dgx` | `spark-79b7.local` (ARM64) | GPU training |
+| NVIDIA DGX Spark 128GB | `dgx` | `spark-79b7.local` (ARM64, Blackwell GPU) | GPU training and tests |
 | MSI WSL2 | `wsl2` | MSI desktop (x86_64) | Triton image build + GKE deploy |
 
 Both training and test containers mount `$HOME/.cache/huggingface` from the DGX host so the `distilbert-base-uncased` tokenizer and IMDB dataset (~200 MB) are downloaded once and reused across runs.
@@ -102,8 +112,9 @@ Both training and test containers mount `$HOME/.cache/huggingface` from the DGX 
 |---|---|---|---|
 | `WIF_PROVIDER` | org | Secret | Workload Identity Federation provider resource name |
 | `GCP_SERVICE_ACCOUNT` | org | Secret | GCP service account email for WIF |
-| `MLFLOW_TRACKING_URI` | — | — | Hardcoded to `http://localhost:5000` in the workflow; training container runs with `--network host` so it reaches MLflow on the DGX loopback directly |
 | `REPO_NAME` | repo | Variable | Repository slug used as the K8s namespace |
+
+`MLFLOW_TRACKING_URI` is hardcoded to `http://localhost:5000` in the workflow — not a repo variable. The training container runs with `--network host` so it reaches MLflow on the DGX loopback directly.
 
 ## Triton Inference
 
@@ -134,9 +145,9 @@ Triton also exposes gRPC on port 8001 and Prometheus metrics on port 8002.
 
 ```
 .github/workflows/
-  ml-train-test.yaml    # Build training image and run pytest (entry point)
-  ml-train.yaml         # GPU training on DGX — exports model.onnx as artifact
-  ml-deploy.yaml        # Triton image build + GKE deploy on WSL2
+  ml-train-test.yaml       # Build training image and run pytest (entry point)
+  ml-train.yaml            # GPU training on DGX — exports model.onnx as artifact
+  ml-deploy.yaml           # Triton image build + GKE deploy on WSL2
 ml/
   train.py              # DistilBERT fine-tune + ONNX export + MLflow logging
   test_train.py         # Unit tests for tokenize_batch, evaluate, ONNX export
