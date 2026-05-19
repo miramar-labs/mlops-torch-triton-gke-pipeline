@@ -32,14 +32,18 @@ jobs:
       - name: Train model
         run: |
           mkdir -p ml/output
+          ONNX_VOLUME="onnx-${{ github.run_id }}"
+          docker volume create "$ONNX_VOLUME"
           docker run --rm --gpus all \
             --network host \
-            -v "$GITHUB_WORKSPACE/ml/output:/output" \
+            -v "${ONNX_VOLUME}:/output" \
             -v "$HOME/.cache/huggingface:/root/.cache/huggingface" \
             -e MLFLOW_TRACKING_URI="http://localhost:5000" \
             -e MLFLOW_EXPERIMENT_NAME="${{ github.event.inputs.experiment || 'text-classifier' }}" \
             -e EPOCHS="${{ github.event.inputs.epochs || '3' }}" \
             ml-trainer:latest
+          docker run --rm -v "${ONNX_VOLUME}:/output" alpine cat /output/model.onnx > ml/output/model.onnx
+          docker volume rm "$ONNX_VOLUME"
 
       - name: Upload ONNX model
         uses: actions/upload-artifact@v4
