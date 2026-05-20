@@ -38,7 +38,7 @@ jobs:
             --network host \
             -v "${ONNX_VOLUME}:/output" \
             -v "$HOME/.cache/huggingface:/root/.cache/huggingface" \
-            -e MLFLOW_TRACKING_URI="http://localhost:5000" \
+            -e MLFLOW_TRACKING_URI="${{ vars.MLFLOW_TRACKING_URI }}" \
             -e MLFLOW_EXPERIMENT_NAME="${{ github.event.inputs.experiment || 'text-classifier' }}" \
             -e EPOCHS="${{ github.event.inputs.epochs || '3' }}" \
             ml-trainer:latest

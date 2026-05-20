@@ -66,7 +66,7 @@ ML Deploy — triggered by ML Train success (runner: wsl2, x86_64)
 
 ## MLflow
 
-MLflow is a persistent service on the DGX host (managed separately). Training containers use `--network host` so they can reach it at `http://localhost:5000`. `MLFLOW_TRACKING_URI` is hardcoded to `http://localhost:5000` in the workflow — not a repo variable.
+MLflow is a persistent service on the DGX host (managed separately). Training containers use `--network host` so they can reach it at `http://localhost:5000`. `MLFLOW_TRACKING_URI` is set via a GitHub org variable.
 
 To view experiment tracking, open the MLflow UI via SSH tunnel:
 

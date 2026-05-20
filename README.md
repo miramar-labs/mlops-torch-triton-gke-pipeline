@@ -116,7 +116,7 @@ Both training and test containers mount `$HOME/.cache/huggingface` from the DGX 
 | `GCP_SERVICE_ACCOUNT` | repo | Secret | GCP service account email for WIF |
 | `REPO_NAME` | repo | Variable | Repository slug used as the K8s namespace |
 
-`MLFLOW_TRACKING_URI` is hardcoded to `http://localhost:5000` in the workflow — not a repo variable. The training container runs with `--network host` so it reaches MLflow on the DGX loopback directly.
+`MLFLOW_TRACKING_URI` is set via a GitHub org variable. The training container runs with `--network host` so it reaches MLflow on the DGX loopback directly.
 
 ## Triton Inference
 
