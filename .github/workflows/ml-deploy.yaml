@@ -2,18 +2,17 @@ name: ML Deploy
 
 on:
   workflow_run:
-    workflows: ["ML Train"]
+    workflows: ["ML Build Push"]
     types: [completed]
   workflow_dispatch:
     inputs:
-      run_id:
-        description: 'ML Train run ID to deploy (find in Actions → ML Train)'
+      image_tag:
+        description: 'GAR image tag to deploy (git SHA — find in Actions → ML Build Push)'
         required: true
 
 permissions:
   contents: read
   id-token: write
-  actions: read
 
 env:
   GCP_PROJECT_ID: miramar-platform
@@ -26,7 +25,7 @@ env:
   DEPLOYMENT_NAME: triton
 
 jobs:
-  build-and-deploy:
+  deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: [self-hosted, wsl2]
     environment:
@@ -36,56 +35,20 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Resolve run ID and image tag
+      - name: Resolve image tag
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            RUN_ID="${{ github.event.inputs.run_id }}"
-            SHA=$(curl -sf -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/runs/${RUN_ID}" \
-              | python3 -c "import sys,json; print(json.load(sys.stdin)['head_sha'])")
+            IMAGE_TAG="${{ github.event.inputs.image_tag }}"
           else
-            RUN_ID="${{ github.event.workflow_run.id }}"
-            SHA="${{ github.event.workflow_run.head_sha }}"
+            IMAGE_TAG="${{ github.event.workflow_run.head_sha }}"
           fi
-          echo "RUN_ID=${RUN_ID}" >> "$GITHUB_ENV"
-          echo "IMAGE_TAG=${SHA}" >> "$GITHUB_ENV"
-
-      - name: Download ONNX model
-        uses: actions/download-artifact@v4
-        with:
-          name: onnx-model
-          path: ml/output
-          run-id: ${{ env.RUN_ID }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
-      - name: Set up gcloud
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker for GAR
-        run: gcloud auth configure-docker "${GAR_LOCATION}-docker.pkg.dev" --quiet
-
-      - name: Pull cache for serving image
-        run: |
-          docker pull "${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPOSITORY}/${APP_NAME}:latest" || true
-
-      - name: Build Triton serving image
-        run: |
-          docker build -f ml/Dockerfile.serve \
-            --cache-from "${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPOSITORY}/${APP_NAME}:latest" \
-            -t "${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPOSITORY}/${APP_NAME}:latest" \
-            -t "${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPOSITORY}/${APP_NAME}:${IMAGE_TAG}" \
-            .
-
-      - name: Push to GAR
-        run: |
-          docker push "${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPOSITORY}/${APP_NAME}:latest"
-          docker push "${GAR_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPOSITORY}/${APP_NAME}:${IMAGE_TAG}"
 
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v2

@@ -4,6 +4,7 @@ GPU ML training pipeline: fine-tune DistilBERT for text classification on a DGX 
 
 [![ML Train Test](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train-test.yaml/badge.svg)](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train-test.yaml)
 [![ML Train](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train.yaml/badge.svg)](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-train.yaml)
+[![ML Build Push](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-build-push.yaml/badge.svg)](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-build-push.yaml)
 [![ML Deploy](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-deploy.yaml/badge.svg)](https://github.com/miramar-labs-org/mlops-torch-triton-gke-pipeline/actions/workflows/ml-deploy.yaml)
 
 ## Links
@@ -40,10 +41,12 @@ ML Train — triggered by ML Train Test success (dgx, ARM64, GPU)
   ├── export → model.onnx
   └── upload artifact → onnx-model
 
-ML Deploy — triggered by ML Train success (wsl2, x86_64)
+ML Build Push — triggered by ML Train success (wsl2, x86_64)
   ├── download artifact → model.onnx
   ├── docker build → Triton serving image (model baked in)
-  ├── push → GAR (latest + SHA tag)
+  └── push → GAR (latest + SHA tag)
+
+ML Deploy — triggered by ML Build Push success (wsl2, x86_64)
   └── kubectl apply → GKE namespace mlops-torch-triton-gke-pipeline
 ```
 
@@ -53,7 +56,8 @@ ML Deploy — triggered by ML Train success (wsl2, x86_64)
 |---|---|---|---|
 | **ML Train Test** | `ml-train-test.yaml` | `dgx` | Push to `ml/train.py`, `test_train.py`, or `Dockerfile.train`; or manual |
 | **ML Train** | `ml-train.yaml` | `dgx` | Auto on ML Train Test success; or manual |
-| **ML Deploy** | `ml-deploy.yaml` | `wsl2` | Auto on ML Train success; or manual with `run_id` |
+| **ML Build Push** | `ml-build-push.yaml` | `wsl2` | Auto on ML Train success; or manual with `run_id` |
+| **ML Deploy** | `ml-deploy.yaml` | `wsl2` | Auto on ML Build Push success; or manual with `image_tag` (git SHA) |
 | **GKE Cluster Expand** | [`miramar-platform-gcp`](https://github.com/miramar-labs-org/miramar-platform-gcp/actions/workflows/gke-cluster-expand.yaml) | `wsl2` | Manual only |
 | **GKE Cluster Restore** | [`miramar-platform-gcp`](https://github.com/miramar-labs-org/miramar-platform-gcp/actions/workflows/gke-cluster-restore.yaml) | `wsl2` | Manual only |
 
@@ -74,7 +78,7 @@ Run these three workflows in sequence to temporarily scale up the cluster, deplo
 | `epochs` | `3` | Number of training epochs |
 | `experiment` | `text-classifier` | MLflow experiment name |
 
-The model artifact (`onnx-model`) passes between workflows via GitHub Actions artifact storage. The deploy workflow uses the training run's commit SHA as the image tag, so `latest` and the SHA-tagged image in GAR always correspond to the same trained model.
+The model artifact (`onnx-model`) passes between workflows via GitHub Actions artifact storage. The commit SHA is used as the image tag throughout — `latest` and the SHA-tagged image in GAR always correspond to the same trained model.
 
 ## Model
 
@@ -149,7 +153,8 @@ Triton also exposes gRPC on port 8001 and Prometheus metrics on port 8002.
 .github/workflows/
   ml-train-test.yaml       # Build training image and run pytest (entry point)
   ml-train.yaml            # GPU training on DGX — exports model.onnx as artifact
-  ml-deploy.yaml           # Triton image build + GKE deploy on WSL2
+  ml-build-push.yaml       # Build Triton serving image and push to GAR
+  ml-deploy.yaml           # Deploy to GKE from GAR image
 ml/
   train.py              # DistilBERT fine-tune + ONNX export + MLflow logging
   test_train.py         # Unit tests for tokenize_batch, evaluate, ONNX export

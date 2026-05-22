@@ -12,7 +12,8 @@ An MLOps pipeline that fine-tunes DistilBERT for text classification (IMDB senti
 .github/workflows/
   ml-train-test.yaml    # Build training image and run pytest (entry point)
   ml-train.yaml         # GPU training on DGX — exports model.onnx as GitHub artifact
-  ml-deploy.yaml        # Build Triton serving image, push to GAR, deploy to GKE
+  ml-build-push.yaml    # Build Triton serving image and push to GAR
+  ml-deploy.yaml        # Deploy to GKE from GAR image
 ml/
   train.py              # DistilBERT fine-tune on IMDB, MLflow logging, ONNX export
   test_train.py         # Unit tests for tokenize_batch, evaluate, ONNX export
@@ -27,7 +28,7 @@ k8s/
 
 ## Workflow
 
-Three workflows chain via `workflow_run` (each triggers the next on success):
+Four workflows chain via `workflow_run` (each triggers the next on success):
 
 ```
 ML Train Test — push to ml/ or workflow_dispatch (runner: dgx, ARM64)
@@ -40,10 +41,12 @@ ML Train — triggered by ML Train Test success; or workflow_dispatch (runner: d
   ├── export model.onnx via named Docker volume → runner filesystem
   └── upload onnx-model artifact (30-day retention)
 
-ML Deploy — triggered by ML Train success (runner: wsl2, x86_64)
+ML Build Push — triggered by ML Train success; or workflow_dispatch with run_id (runner: wsl2, x86_64)
   ├── download onnx-model artifact
   ├── docker build Triton serving image (model.onnx baked in)
-  ├── push to GAR (:latest + commit SHA tag)
+  └── push to GAR (:latest + commit SHA tag)
+
+ML Deploy — triggered by ML Build Push success; or workflow_dispatch with image_tag (runner: wsl2, x86_64)
   └── kubectl apply → GKE, rollout wait 300s
 ```
 
